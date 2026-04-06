@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Online Shopping Platform</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:#f4f6f8;
+}
+
+header{
+    background:#222;
+    color:white;
+    padding:15px;
+    text-align:left;
+    position:relative;
+}
+
+input, select{
+    box-sizing:border-box;
+}
+
+.cart-icon{
+    position:absolute;
+    right:20px;
+    top:18px;
+    cursor:pointer;
+    font-size:20px;
+}
+
+.cart-count{
+    background:red;
+    color:white;
+    border-radius:50%;
+    padding:2px 7px;
+    font-size:12px;
+    position:absolute;
+    top:-10px;
+    right:-12px;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+    padding:20px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:15px;
+}
+
+.product{
+    background:white;
+    display:flex;
+    padding:15px;
+    border-radius:6px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    align-items:center;
+    width:calc(50% - 15px);
+    box-sizing:border-box;
+}
+
+.product img{
+    width:110px;
+    height:110px;
+    object-fit:cover;
+    border-radius:6px;
+}
+
+.product-details{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    margin-left:20px;
+    height:110px;
+}
+
+.product-details h3{
+    margin:0;
+    font-size:18px;
+}
+
+.product-details p{
+    margin:4px 0;
+    font-size:16px;
+    font-weight:bold;
+}
+
+.stock-info{
+    font-size:13px;
+    color:#666;
+    margin:4px 0;
+}
+
+.stock-info.low-stock{
+    color:#ff6b00;
+    font-weight:bold;
+}
+
+.stock-info.out-of-stock{
+    color:red;
+    font-weight:bold;
+}
+
+.add-btn{
+    margin-top:6px;
+    background:#ffd814;
+    border:none;
+    padding:7px 14px;
+    border-radius:25px;
+    cursor:pointer;
+    font-weight:bold;
+    width:140px;
+}
+
+.add-btn:disabled{
+    background:#ccc;
+    cursor:not-allowed;
+    opacity:0.5;
+}
+
+.popup{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    justify-content:center;
+    align-items:center;
+    z-index:1000;
+}
+
+.popup-content{
+    background:white;
+    width:400px;
+    padding:30px;
+    border-radius:8px;
+    position:relative;
+    max-height:80vh;
+    overflow-y:auto;
+}
+
+.close{
+    position:absolute;
+    top:12px;
+    right:15px;
+    cursor:pointer;
+    font-size:24px;
+}
+
+.cart-item{
+    display:flex;
+    justify-content:space-between;
+    margin:10px 0;
+    padding:8px;
+    background:#f9f9f9;
+    border-radius:4px;
+}
+
+.cart-item-details{
+    flex:1;
+}
+
+.cart-item-name{
+    font-weight:bold;
+}
+
+.cart-item-calc{
+    font-size:13px;
+    color:#666;
+    margin-top:2px;
+}
+
+.cart-item span{
+    cursor:pointer;
+    padding:0 6px;
+    font-size:18px;
+}
+
+.coupon-section{
+    margin:20px 0;
+    padding:15px;
+    background:#f0f8ff;
+    border-radius:6px;
+}
+
+.coupon-input-group{
+    display:flex;
+    gap:10px;
+    margin-top:10px;
+}
+
+.coupon-input-group input{
+    flex:1;
+    margin:0;
+}
+
+.coupon-input-group button{
+    margin:0;
+    width:auto;
+    padding:10px 20px;
+}
+
+.discount-applied{
+    color:#0a8f0a;
+    font-weight:bold;
+    margin-top:10px;
+}
+
+.cart-summary{
+    margin-top:20px;
+    padding-top:15px;
+    border-top:2px solid #ddd;
+}
+
+.summary-row{
+    display:flex;
+    justify-content:space-between;
+    margin:8px 0;
+}
+
+.summary-row.discount{
+    color:#0a8f0a;
+    font-weight:bold;
+}
+
+.summary-row.total{
+    font-size:18px;
+    font-weight:bold;
+    margin-top:12px;
+    padding-top:10px;
+    border-top:1px solid #ddd;
+}
+
+.order-total{
+    text-align:right;
+    font-weight:bold;
+    margin-bottom:10px;
+}
+
+input,select{
+    width:100%;
+    padding:10px;
+    margin-top:12px;
+    border:1px solid #ccc;
+    border-radius:4px;
+}
+
+button{
+    margin-top:25px;
+    width:100%;
+    padding:10px;
+    border:none;
+    background:#46c70f;
+    color:white;
+    border-radius:4px;
+    cursor:pointer;
+}
+
+button:hover{
+    opacity:0.9;
+}
+
+.error{
+    color:red;
+    font-size:12px;
+    margin-top:2px;
+}
+</style>
+
+</head>
+
+<body>
+
+<header>
+<h1><i>DigiMart</i></h1>
+<div class="cart-icon" onclick="openCart()">
+🛒 Cart <span class="cart-count" id="cartCount">0</span>
+</div>
+</header>
+
+<div class="container" id="productContainer"></div>
+
+<div class="popup" id="cartPopup">
+<div class="popup-content">
+<span class="close" onclick="closeCart()">✖</span>
+<h2>Shopping Cart</h2>
+<div id="cartItems"></div>
+
+<div class="coupon-section">
+    <div><b>Have a coupon code?</b></div>
+    <div class="coupon-input-group">
+        <input id="couponInput" placeholder="Enter coupon code" type="text">
+        <button id="couponBtn" onclick="toggleCoupon()">Apply</button>
+    </div>
+    <div id="couponMessage"></div>
+</div>
+
+<div class="cart-summary">
+    <div class="summary-row">
+        <span>Subtotal:</span>
+        <span>₹<span id="cartSubtotal">0</span></span>
+    </div>
+    <div class="summary-row discount" id="discountRow" style="display:none">
+        <span>Discount (10%):</span>
+        <span>- ₹<span id="discountAmount">0</span></span>
+    </div>
+    <div class="summary-row total">
+        <span>Total:</span>
+        <span>₹<span id="cartTotal">0</span></span>
+    </div>
+</div>
+
+<button onclick="openOrder()">Proceed to Buy</button>
+</div>
+</div>
+
+<div class="popup" id="orderPopup">
+<div class="popup-content">
+<span class="close" onclick="closeOrder()">✖</span>
+<h3>Delivery Details</h3>
+
+<div class="order-total">Total: ₹<span id="orderTotal"></span></div>
+
+<input id="name" placeholder="Name" type="text">
+<div id="nameErr" class="error"></div>
+
+<input id="place" placeholder="Place" type="text">
+<div id="placeErr" class="error"></div>
+
+<input id="pincode" placeholder="Pincode" type="text">
+<div id="pincodeErr" class="error"></div>
+
+<input id="address" placeholder="Address" type="text">
+
+<input id="mobile" placeholder="Mobile Number" type="text">
+<div id="mobileErr" class="error"></div>
+
+<select id="payment" onchange="paymentChange()">
+<option value="">Select Payment Method</option>
+<option>Cash on Delivery</option>
+<option>UPI</option>
+<option>Card</option>
+</select>
+
+<input id="upi" placeholder="UPI ID" type="text" style="display:none">
+<div id="upiErr" class="error"></div>
+
+<input id="card" placeholder="Card Number" type="text" style="display:none">
+<div id="cardErr" class="error"></div>
+
+<button onclick="confirmOrder()">Place Order</button>
+</div>
+</div>
+
+<div class="popup" id="thankPopup">
+<div class="popup-content" style="text-align:center; max-width:400px;">
+<h2 style="color:#46c70f; margin-bottom:20px; font-size:28px;">🎉 Congratulations!!</h2>
+<p style="font-size:18px; margin-bottom:30px; color:#333;">Order has been placed successfully.</p>
+<button style="background:#46c70f; width:140px; padding:12px; font-size:15px; margin:0 auto; display:block; border-radius:25px;" onclick="continueShopping()">Go to Home</button>
+</div>
+</div>
+
+<script>
+
+let products = [
+    {name: "Mobile Phone", price: 85000, stock: 5, img: "https://darlingretail.com/cdn/shop/files/iPhone_15_Blue_Pure_Back_iPhone_15_Blue_Pure_Front_2up_Screen__WWEN_600x.jpg?v=1695103868"},
+    {name: "Laptop", price: 55000, stock: 3, img: "https://www.asus.com/media/Odin/Websites/global/Series/24.png"},
+    {name: "Earbuds", price: 8500, stock: 10, img: "https://www.gearpatrol.com/wp-content/uploads/sites/2/2022/06/sennheiser-momentum-review-lead-1656435940-jpg.webp"},
+    {name: "Water Bottle", price: 700, stock: 15, img: "https://www.bbassets.com/media/uploads/p/l/40178739_6-bb-home-glass-water-bottle-with-round-base-blue-bb1361.jpg"},
+    {name: "Classmate Notebook", price: 140, stock: 20, img: "https://cdn.fcglcdn.com/brainbees/images/products/438x531/15325932a.webp"},
+    {name: "Refrigerator", price: 48000, stock: 2, img: "https://images.samsung.com/is/image/samsung/p6pim/in/rs7hcg8543b1hl/energylabel/in-energylabel-product-rs7hcg8543b1hl-550601472?$Q90_1248_936_F_PNG$"},
+    {name: "Headphones", price: 15000, stock: 7, img: "https://mobistorm.in/cache/large/product/1979/Giq03hYnxgiXorHdcFJJ0qWSNmlEUY69V2SEueIA.jpg"},
+    {name: "Shoes", price: 5000, stock: 12, img: "https://rukminim2.flixcart.com/image/480/640/xif0q/shoe/i/4/d/-original-imahgcstz8yassjf.jpeg?q=90"},
+    {name: "Study Table", price: 1100, stock: 4, img: "https://www.firstcrawl.in/cdn/shop/products/9992751e_884x.jpg?v=1664118225"},
+    {name: "Smart Watch", price: 4200, stock: 8, img: "https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcTCFm6_xau8mIDDWUVxOXZcLCTcmb2qNyRosrlmDMv6Z-PPGk8Q1CKvy4OczUiKXSpWToQIUqr8demxH0MkZr6NsTUiUoY_"}
+];
+
+let cart = {};
+let couponApplied = false;
+
+function displayProducts(){
+    let html = "";
+    products.forEach(p => {
+        let stockClass = "";
+        let stockText = "";
+        let disabled = "";
+        
+        if(p.stock === 0){
+            stockClass = "out-of-stock";
+            stockText = "Out of Stock";
+            disabled = "disabled";
+        } else if(p.stock <= 3){
+            stockClass = "low-stock";
+            stockText = `Items left: ${p.stock}`;
+        } else {
+            stockText = `Items left: ${p.stock}`;
+        }
+        
+        html += `
+        <div class="product">
+            <img src="${p.img}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22110%22 height=%22110%22%3E%3Crect width=%22110%22 height=%22110%22 fill=%22%23ddd%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22%3EImage%3C/text%3E%3C/svg%3E'">
+            <div class="product-details">
+                <h3>${p.name}</h3>
+                <p>₹${p.price}</p>
+                <div class="stock-info ${stockClass}">${stockText}</div>
+                <button class="add-btn" onclick="addToCart('${p.name}')" ${disabled}>Add to Cart</button>
+            </div>
+        </div>`;
+    });
+    productContainer.innerHTML = html;
+}
+
+function addToCart(name){
+    let product = products.find(p => p.name === name);
+    
+    if(!product || product.stock === 0){
+        return;
+    }
+    
+    if(cart[name]){
+        cart[name].qty++;
+    } else {
+        cart[name] = { price: product.price, qty: 1 };
+    }
+    
+    product.stock--;
+    
+    displayProducts();
+    updateCart();
+}
+
+function updateCart(){
+    cartItems.innerHTML = "";
+    let subtotal = 0, count = 0;
+
+    for(let item in cart){
+        let itemTotal = cart[item].price * cart[item].qty;
+        subtotal += itemTotal;
+        count += cart[item].qty;
+
+        let removeIcon = cart[item].qty > 1 ? "−" : "🗑";
+
+        cartItems.innerHTML += `
+        <div class="cart-item">
+            <div class="cart-item-details">
+                <div class="cart-item-name">${item}</div>
+                <div class="cart-item-calc">₹${cart[item].price} × ${cart[item].qty} = ₹${itemTotal}</div>
+            </div>
+            <div>
+                <span onclick="addToCart('${item}')">+</span>
+                <span onclick="removeItem('${item}')">${removeIcon}</span>
+            </div>
+        </div>`;
+    }
+
+    cartSubtotal.innerText = subtotal;
+    
+    let discount = 0;
+    if(couponApplied){
+        discount = Math.round(subtotal * 0.1);
+        discountAmount.innerText = discount;
+        discountRow.style.display = "flex";
+    } else {
+        discountRow.style.display = "none";
+    }
+    
+    let total = subtotal - discount;
+    cartTotal.innerText = total;
+    orderTotal.innerText = total;
+    cartCount.innerText = count;
+}
+
+function removeItem(item){
+    let product = products.find(p => p.name === item);
+    
+    if(cart[item].qty > 1){
+        cart[item].qty--;
+    } else {
+        delete cart[item];
+    }
+    
+    product.stock++;
+    displayProducts();
+    updateCart();
+}
+
+function toggleCoupon(){
+    let code = couponInput.value.trim().toUpperCase();
+    
+    if(!couponApplied){
+
+        if(code === "VIT"){
+            couponApplied = true;
+            couponBtn.innerText = "Remove";
+            couponInput.disabled = true;
+            couponMessage.innerHTML = '<div class="discount-applied">✓ Coupon applied! 10% discount</div>';
+            updateCart();
+        } else {
+            couponMessage.innerHTML = '<div class="error">Invalid coupon code</div>';
+        }
+    } else {
+        // Remove coupon
+        couponApplied = false;
+        couponBtn.innerText = "Apply";
+        couponInput.disabled = false;
+        couponInput.value = "";
+        couponMessage.innerHTML = "";
+        updateCart();
+    }
+}
+
+function openCart(){ 
+    if(Object.keys(cart).length === 0){
+        alert("Your cart is empty!");
+        return;
+    }
+    cartPopup.style.display="flex";
+}
+
+function closeCart(){ 
+    cartPopup.style.display="none"; 
+}
+
+function openOrder(){ 
+    if(Object.keys(cart).length === 0){
+        alert("Your cart is empty!");
+        return;
+    }
+    closeCart(); 
+    orderPopup.style.display="flex";
+}
+
+function closeOrder(){ 
+    orderPopup.style.display="none"; 
+}
+
+function paymentChange(){
+    document.getElementById("upi").style.display = "none";
+    document.getElementById("card").style.display = "none";
+    document.getElementById("upiErr").innerText = "";
+    document.getElementById("cardErr").innerText = "";
+    
+    let paymentValue = document.getElementById("payment").value;
+    if(paymentValue === "UPI") document.getElementById("upi").style.display = "block";
+    if(paymentValue === "Card") document.getElementById("card").style.display = "block";
+}
+
+function confirmOrder(){
+    
+    document.getElementById("nameErr").innerText = "";
+    document.getElementById("placeErr").innerText = "";
+    document.getElementById("pincodeErr").innerText = "";
+    document.getElementById("mobileErr").innerText = "";
+    document.getElementById("upiErr").innerText = "";
+    document.getElementById("cardErr").innerText = "";
+
+    let isValid = true;
+
+    let nameValue = document.getElementById("name").value.trim();
+    let placeValue = document.getElementById("place").value.trim();
+    let pincodeValue = document.getElementById("pincode").value.trim();
+    let mobileValue = document.getElementById("mobile").value.trim();
+    let paymentValue = document.getElementById("payment").value;
+    let upiValue = document.getElementById("upi").value.trim();
+    let cardValue = document.getElementById("card").value.trim();
+
+    if(nameValue === ""){
+        document.getElementById("nameErr").innerText = "Required field";
+        isValid = false;
+    } else if(!/^[a-zA-Z\s]+$/.test(nameValue)){
+        document.getElementById("nameErr").innerText = "Name should contain only alphabets";
+        isValid = false;
+    }
+
+    if(placeValue === ""){
+        document.getElementById("placeErr").innerText = "Required field";
+        isValid = false;
+    } else if(!/^[a-zA-Z\s]+$/.test(placeValue)){
+        document.getElementById("placeErr").innerText = "Place should contain only alphabets";
+        isValid = false;
+    }
+
+    if(pincodeValue === ""){
+        document.getElementById("pincodeErr").innerText = "Required field";
+        isValid = false;
+    } else if(!/^\d{6}$/.test(pincodeValue)){
+        document.getElementById("pincodeErr").innerText = "Pincode must be 6 digits";
+        isValid = false;
+    }
+
+    if(mobileValue === ""){
+        document.getElementById("mobileErr").innerText = "Required field";
+        isValid = false;
+    } else if(!/^\d{10}$/.test(mobileValue)){
+        document.getElementById("mobileErr").innerText = "Mobile number must be 10 digits";
+        isValid = false;
+    }
+
+    if(paymentValue === ""){
+        alert("Please select a payment method");
+        isValid = false;
+    }
+
+    if(paymentValue === "UPI"){
+        if(upiValue === ""){
+            document.getElementById("upiErr").innerText = "Required field";
+            isValid = false;
+        } else if(!upiValue.includes("@")){
+            document.getElementById("upiErr").innerText = "Enter valid UPI ID (must contain @)";
+            isValid = false;
+        }
+    }
+
+    if(paymentValue === "Card"){
+        if(cardValue === ""){
+            document.getElementById("cardErr").innerText = "Required field";
+            isValid = false;
+        } else if(!/^\d{16}$/.test(cardValue.replace(/\s/g, ''))){
+            document.getElementById("cardErr").innerText = "Card number must be 16 digits";
+            isValid = false;
+        }
+    }
+
+    if(isValid){
+        document.getElementById("orderPopup").style.display = "none";
+        document.getElementById("thankPopup").style.display = "flex";
+    }
+}
+
+function continueShopping(){
+    cart = {};
+    couponApplied = false;
+    document.getElementById("couponInput").value = "";
+    document.getElementById("couponInput").disabled = false;
+    document.getElementById("couponBtn").innerText = "Apply";
+    document.getElementById("couponMessage").innerHTML = "";
+    
+    document.getElementById("name").value = "";
+    document.getElementById("place").value = "";
+    document.getElementById("pincode").value = "";
+    document.getElementById("address").value = "";
+    document.getElementById("mobile").value = "";
+    document.getElementById("payment").value = "";
+    document.getElementById("upi").value = "";
+    document.getElementById("card").value = "";
+    document.getElementById("upi").style.display = "none";
+    document.getElementById("card").style.display = "none";
+    
+    updateCart();
+    document.getElementById("thankPopup").style.display = "none";
+}
+
+displayProducts();
+updateCart();
+</script>
+
+</body>
+</html>
